@@ -6,11 +6,14 @@ The idea comes from [Andrej Karpathy](https://x.com/karpathy/status/210581930347
 
 > Ask your LLM to explain something in ASD-STE100 ... it comes with heavy constraints on clean writing style that I often find a lot more readable. Sometimes I've tried to soften it a bit e.g. ask for "80% of the way to ASD-STE100" because the spec is quite stringent.
 
-LLMs already know the standard. So the skill is one short file. It does three things:
+LLMs already know the standard. So the skill is one short file. It does four things:
 
 1. It sets the level: **80%** by default, **100%** when you ask for "strict".
 2. It lists the 80% rules, so that "80%" means the same thing every time.
 3. It adds guard rails: keep every fact, keep every hedge, add no facts, do not touch code.
+4. It adds the stronger formats from the same post, in Karpathy's order: a **diagram** (Mermaid or SVG), an **interactive HTML page**, and a **3b1b-style explainer video** (Manim, with ElevenLabs narration if you give a key, or a free local text-to-speech tool if you do not). All text in them is STE.
+
+By default you get STE text, plus a diagram when the subject has several parts or steps. You get a page or a video only when you ask for one.
 
 ## Install
 
@@ -31,7 +34,12 @@ Explain this function in STE.
 Rewrite this PR description, 80% ASD-STE100.
 Explain how the cache works, strict STE.
 Rewrite this error message in STE and show the changes.
+Explain the request flow as a diagram.
+Explain how this scheduler works, in HTML.
+Create a 3b1b style video explainer on attention. Use my ElevenLabs API key for narration.
 ```
+
+The video needs Python, [Manim](https://www.manim.community/), and `ffmpeg` on your computer.
 
 ## What it does not do
 

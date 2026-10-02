@@ -1,6 +1,6 @@
 ---
 name: asd-ste100
-description: "Explain or rewrite text in ASD-STE100 Simplified Technical English so a human can read it fast. Default is Karpathy's '80% of the way to ASD-STE100'. Use when the user asks for STE, ASD-STE100, Simplified Technical English, '80% STE', 'Karpathy-style', or a plain, easy-to-read explanation of code, a system, a diff, or any LLM output. Not for creative or marketing copy."
+description: "Explain or rewrite text in ASD-STE100 Simplified Technical English so a human can read it fast. Default is Karpathy's '80% of the way to ASD-STE100'. Also makes the stronger explainer formats Karpathy recommends: a diagram, an interactive HTML page, or a 3b1b-style explainer video. Use when the user asks for STE, ASD-STE100, Simplified Technical English, '80% STE', 'Karpathy-style', a plain explanation of code, a system, a diff, or any LLM output, or asks to explain something as a diagram, an HTML page, or an explainer video. Not for creative or marketing copy."
 ---
 
 # ASD-STE100 for readable LLM output
@@ -82,3 +82,55 @@ If the user asks "show the changes" or "which rules", give a table:
 1. Start the container.
 2. Make sure that the container is healthy.
 3. Start the migration.
+
+## Better than text: diagram, HTML page, video
+
+Karpathy puts these formats in order. Each one is better than the one before it, but it also costs more to make:
+
+1. **STE text** (the rules above)
+2. **Diagram.** "These can be a lot easier to process, parse, and understand."
+3. **HTML page.** "Ask for output 'in HTML' to get a beautiful, interactive webpage."
+4. **Explainer video.** "The output format I am most bullish on." For example: "Create a 3b1b style video explainer on X."
+
+### Which format to use
+
+- If the user names a format, use that format.
+- If the user does not name a format, write STE text. If the subject has 3 or more parts that interact, or has a sequence or a change of state, add a diagram.
+- Do not make an HTML page or a video unless the user asks for one. You can offer one in a single line at the end of your answer.
+
+Write all text in these formats in STE: labels, captions, page text, and narration. The guard rails above apply to all formats.
+
+### Diagram
+
+- Use Mermaid, because GitHub, many editors, and many chat tools show it. Use SVG if the subject needs a free layout, for example a geometry or a memory layout.
+- Show one idea in each diagram. If a diagram has more than about 12 boxes, divide it into 2 diagrams.
+- Use the same name for a thing in the diagram and in the text.
+- Use short labels: 1 to 4 words. Put a verb on each arrow ("sends", "reads", "retries").
+- Put one sentence below the diagram that tells the reader where to start.
+
+### HTML page
+
+- Make one file that contains all of the HTML, CSS, and JavaScript. Load libraries from a CDN only if necessary.
+- Make the reader do something, not only read: step through a process, move a slider, toggle between 2 states, or see the result of an input.
+- Start with the main idea at the top. Put details below it.
+- The page must work on a phone screen, and in light mode and dark mode.
+- Do not use real data, keys, or personal information unless the user gives them for this purpose.
+
+### Explainer video
+
+Make a 3Blue1Brown-style video with [Manim](https://www.manim.community/) (the Python animation library that 3Blue1Brown uses):
+
+1. Write a script. Divide it into scenes. For each scene, write the narration in STE and describe the animation.
+2. Write the Manim code. Make one class for each scene. Keep each scene short: about 10 to 40 seconds.
+3. Make the narration audio:
+   - If the user gives an ElevenLabs API key (or a key for a different text-to-speech service), use it. Read the key from an environment variable. Do not write the key into a file.
+   - If the user does not give a key, use a free text-to-speech tool that runs on the local computer, and tell the user which tool you chose.
+4. Put each audio clip with its scene. Make the animation of each scene as long as its audio.
+5. Render the scenes and join them into one video file, for example with `ffmpeg`.
+6. Tell the user the path of the video file and the command that renders it again.
+
+Render at low quality first (`manim -ql`) to find errors fast. Render at high quality only at the end.
+
+## Why
+
+As LLMs do more of the work, more of your work becomes oversight and understanding. You can now ask for large, custom software artifacts that you use once and then discard. A web page or a video that explains one topic to one person did not make sense to create before. Now it does.
