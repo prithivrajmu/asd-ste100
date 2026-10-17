@@ -3,7 +3,7 @@ name: asd-ste100
 description: "Explain or rewrite technical text in clear, STE-inspired English. Use for ASD-STE100, Simplified Technical English, '80% STE', 'strict STE', 'Karpathy-style', or a plain explanation of code, a diff, or a system. Supports diagrams, interactive HTML, and explainer videos when requested. Not for creative or marketing copy."
 license: MIT
 metadata:
-  version: "0.1.0" # x-release-please-version
+  version: "0.2.0" # x-release-please-version
 ---
 
 # ASD-STE100 for readable output
