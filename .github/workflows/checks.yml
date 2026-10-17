@@ -1,0 +1,57 @@
+name: Checks and version PRs
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate skill
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - run: python -m unittest discover -s tests -v
+
+  prepare-version:
+    name: Prepare version PR (never publish)
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      actions: write
+    steps:
+      - uses: googleapis/release-please-action@8b8fd2cc23b2e18957157a9d923d75aa0c6f6ad5 # v4
+        id: version-pr
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+          skip-github-release: true
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+      # GITHUB_TOKEN-created PRs do not trigger pull_request workflows.
+      # Explicit workflow_dispatch does, without a separate long-lived token.
+      - name: Validate the version PR
+        if: steps.version-pr.outputs.prs_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_JSON: ${{ steps.version-pr.outputs.pr }}
+        run: |
+          branch="$(jq -er '.headBranchName' <<< "$PR_JSON")"
+          gh workflow run checks.yml --ref "$branch"

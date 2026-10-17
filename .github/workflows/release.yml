@@ -1,0 +1,89 @@
+name: Release from tag
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate release tag
+    runs-on: ubuntu-latest
+    outputs:
+      pr-number: ${{ steps.version-pr.outputs.number }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - run: python -m unittest discover -s tests -v
+      - name: Require a prepared version on main
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          git merge-base --is-ancestor HEAD origin/main
+          python scripts/release.py notes --tag "$TAG_NAME" --output "$RUNNER_TEMP/release-notes.md"
+      - name: Require the version PR merge commit
+        id: version-pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          sha="$(git rev-parse HEAD)"
+          number="$(gh api "repos/$GH_REPO/commits/$sha/pulls" --paginate --slurp \
+            | jq 'add' | python scripts/release.py pr --sha "$sha")"
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+
+  publish:
+    name: Publish the existing tag
+    needs: validate
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - name: Publish only the verified, existing tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          python scripts/release.py notes --tag "$TAG_NAME" --output "$RUNNER_TEMP/release-notes.md"
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Release $TAG_NAME already exists."
+          else
+            gh release create "$TAG_NAME" --verify-tag --title "$TAG_NAME" \
+              --notes-file "$RUNNER_TEMP/release-notes.md"
+          fi
+      - name: Mark the version PR as tagged
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ needs.validate.outputs.pr-number }}
+        run: |
+          gh label create "autorelease: tagged" --color 0E8A16 \
+            --description "The prepared version has been released" --force
+          gh pr edit "$PR_NUMBER" --add-label "autorelease: tagged"
+          pending="$(gh pr view "$PR_NUMBER" --json labels \
+            --jq 'any(.labels[]; .name == "autorelease: pending")')"
+          if [ "$pending" = "true" ]; then
+            gh pr edit "$PR_NUMBER" --remove-label "autorelease: pending"
+          fi
