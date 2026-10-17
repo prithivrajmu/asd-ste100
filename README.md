@@ -3,7 +3,7 @@
 An agent skill for clear technical explanations and rewrites, inspired by [ASD-STE100 Simplified Technical English](https://www.asd-ste100.org/).
 It defaults to **80% STE**: short sentences, plain words, and normal technical vocabulary.
 
-Version: **0.1.0** <!-- x-release-please-version -->
+Version: **0.2.0** <!-- x-release-please-version -->
 
 The relaxed style takes inspiration from [Andrej Karpathy's STE tip](https://x.com/karpathy/status/2105819303471976479).
 "80%" describes a writing style, not a compliance score.

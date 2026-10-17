@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.0](https://github.com/prithivrajmu/asd-ste100/compare/v0.1.0...v0.2.0) (2026-10-17)
+
+
+### Features
+
+* improve STE guidance and prepare tag-only releases ([b71f20a](https://github.com/prithivrajmu/asd-ste100/commit/b71f20a39adbbab12e5f44b0c8fb5e7aa5ca69b9))
+
+## Changelog
+
 Release Please adds versioned entries here when a release PR is created.
 
 ## Unreleased
